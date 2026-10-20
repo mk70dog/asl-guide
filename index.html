@@ -10,7 +10,9 @@ input[type=search],select{background:#000;color:var(--fg);border:1px solid var(-
 input[type=search]{flex:1 1 240px;min-width:0;border-color:var(--bl)}
 .cnt{font-variant-numeric:tabular-nums;color:var(--gr);text-shadow:0 0 6px #00dc6499;font-family:ui-monospace,Menlo,monospace;background:#000;border:1px solid #1a1e2a;border-radius:4px;padding:2px 8px;min-width:4.5em;text-align:right}
 .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.chip{background:#0d0d14;color:var(--mu);border:1px solid var(--bd);border-radius:3px;min-height:32px;padding:2px 10px;cursor:pointer;font:inherit;font-size:13px}
+.chip{background:#0d0d14;color:var(--mu);border:1px solid var(--bd);border-radius:3px;min-height:40px;padding:2px 12px;cursor:pointer;font:inherit;font-size:13px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.chip .n{margin-left:6px;font-family:ui-monospace,Menlo,monospace;font-size:12px;opacity:.75}.chip.zero{opacity:.35}.chip.on .n{opacity:1}
+#clr{display:none;height:40px;border-color:var(--rd);color:var(--rd)}#clr.on{display:inline-block}.btn{touch-action:manipulation}
+.fl{margin-top:4px;font-size:12px;color:var(--go)}
 .chip.on{color:#000;background:var(--bl);border-color:var(--bl);font-weight:bold}
 .chip.sk.on{background:var(--go);border-color:var(--go)}
 main{max-width:1000px;margin:0 auto;padding:12px 16px 60px}
@@ -57,7 +59,7 @@ footer{color:var(--mu);font-size:12px;text-align:center;padding:20px}
 @media(max-width:600px){h1 small{display:block;margin:0}header{position:static}}
 </style></head><body>
 <header><h1>SK3 から BV へ — 追加ルールガイド<small>Beyond Valor・ASL Classic の 32 本向け</small></h1>
-<div class="bar"><input type="search" id="q" placeholder="検索(例:隠蔽、Sniper、A12、橋、BV10)"><select id="sc"><option value="">シナリオで絞る</option></select><span class="cnt" id="cnt"></span></div>
+<div class="bar"><input type="search" id="q" placeholder="検索(例:隠蔽、Sniper、A12、橋、BV10)"><select id="sc"><option value="">シナリオで絞る</option></select><span class="cnt" id="cnt"></span><button class="btn" id="clr">絞り込み解除</button></div>
 <div class="chips" id="cats"></div>
 <div class="chips"><button class="chip sk" data-sk="new">SK にない(新規)</button><button class="chip sk" data-sk="chg">SK から変わる</button><button class="chip sk rv" data-sk="rev">SK のおさらい</button><button class="chip sk" data-imp="3">★★★ まず覚える</button></div>
 </header>
@@ -96,20 +98,25 @@ function card(e){
 function draw(){
  var L=D.E.filter(match),h='',last='';
  L.forEach(function(e){if(e.cat!==last){h+='<h2 class="cat">'+esc(e.cat)+'</h2>';last=e.cat;}h+=card(e);});
- document.getElementById('list').innerHTML=h||'<div class="none">見つかりません。言葉を変えるか、絞り込みを外してください。</div>';
+ document.getElementById('list').innerHTML=h||'<div class="none">この組み合わせに当てはまる項目はありません。<br>上の「絞り込み解除」を押すか、ほかのボタンを選んでください。</div>';
  document.getElementById('cnt').textContent=L.length+' / '+D.E.length;
  var gq=st.q.toLowerCase();
  document.getElementById('gl').innerHTML=D.G.filter(function(g){return !gq||(g[0]+g[1]).toLowerCase().indexOf(gq)>=0;}).map(function(g){return '<div><b>'+hl(g[0])+'</b>'+hl(g[1])+'</div>';}).join('')||'<div class="none">用語なし</div>';
- [].forEach.call(document.querySelectorAll('#cats .chip'),function(b){b.classList.toggle('on',b.dataset.cat===st.cat);});
- [].forEach.call(document.querySelectorAll('[data-sk]'),function(b){b.classList.toggle('on',b.dataset.sk===st.sk);});
- [].forEach.call(document.querySelectorAll('[data-imp]'),function(b){b.classList.toggle('on',+b.dataset.imp===st.imp);});
+ [].forEach.call(document.querySelectorAll('#cats .chip'),function(b){var on=b.dataset.cat===st.cat;b.classList.toggle('on',on);var n=cnt({cat:b.dataset.cat});setN(b,n,on);});
+ [].forEach.call(document.querySelectorAll('[data-sk]'),function(b){var on=b.dataset.sk===st.sk;b.classList.toggle('on',on);setN(b,cnt({sk:b.dataset.sk}),on);});
+ [].forEach.call(document.querySelectorAll('[data-imp]'),function(b){var on=+b.dataset.imp===st.imp;b.classList.toggle('on',on);setN(b,cnt({imp:+b.dataset.imp}),on);});
+ var act=!!(st.q||st.sc||st.cat||st.sk||st.imp);document.getElementById('clr').classList.toggle('on',act);
 }
+function cnt(o){var s0={q:st.q,sc:st.sc,cat:st.cat,sk:st.sk,imp:st.imp};for(var k in o)st[k]=o[k];var n=D.E.filter(match).length;for(var k2 in s0)st[k2]=s0[k2];return n;}
+function setN(b,n,on){var sp=b.querySelector('.n');if(!sp){sp=document.createElement('span');sp.className='n';b.appendChild(sp);}sp.textContent=n;b.classList.toggle('zero',!on&&n===0);}
+function toList(){var l=document.getElementById('list'),hd=document.querySelector('header');var hh=getComputedStyle(hd).position==='sticky'?hd.offsetHeight:0;var top=l.getBoundingClientRect().top;if(top<hh+4||top>window.innerHeight-80){window.scrollTo(0,Math.max(0,top+window.pageYOffset-hh-8));}}
 var cs=document.getElementById('cats');cs.innerHTML='<button class="chip" data-cat="">すべて</button>'+D.CATS.map(function(c){return '<button class="chip" data-cat="'+esc(c)+'">'+esc(c)+'</button>';}).join('');
 var sel=document.getElementById('sc');Object.keys(D.SC).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k+' '+D.SC[k];sel.appendChild(o);});
 document.getElementById('q').addEventListener('input',function(){st.q=this.value.trim();draw();});
-sel.addEventListener('change',function(){st.sc=this.value;draw();});
+sel.addEventListener('change',function(){st.sc=this.value;draw();toList();});
+document.getElementById('clr').onclick=function(){st={q:'',sc:'',cat:'',sk:'',imp:0};document.getElementById('q').value='';sel.value='';draw();toList();};
 document.addEventListener('click',function(ev){var t=ev.target;
- var c=t.closest('.chip');if(c){if('cat' in c.dataset)st.cat=c.dataset.cat;else if(c.dataset.sk)st.sk=(st.sk===c.dataset.sk?'':c.dataset.sk);else if(c.dataset.imp)st.imp=(st.imp?0:+c.dataset.imp);draw();return;}
+ var c=t.closest('.chip');if(c){if('cat' in c.dataset)st.cat=c.dataset.cat;else if(c.dataset.sk)st.sk=(st.sk===c.dataset.sk?'':c.dataset.sk);else if(c.dataset.imp)st.imp=(st.imp?0:+c.dataset.imp);draw();toList();return;}
  var jb=t.closest('.jb');if(jb){jOpen(jb.dataset.ch,+jb.dataset.pg,jb.dataset.r);return;}
  var a=t.closest('a[data-sc]');if(a){st.sc=a.dataset.sc;sel.value=st.sc;draw();window.scrollTo(0,0);return;}
  var h=t.closest('.ch');if(h){var cd=h.parentNode;open[cd.dataset.id]=!cd.classList.contains('open');cd.classList.toggle('open');}});
